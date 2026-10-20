@@ -31,6 +31,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 |---|---|---|
 | GET | `/health` | API and database status |
 | POST | `/accounts` | Create an account |
+| GET | `/accounts` | List customer accounts with balances, newest first |
 | GET | `/accounts/:id` | Get an account and its balance |
 | POST | `/deposits` | Deposit money into an account |
 | POST | `/transfers` | Transfer money between accounts (requires `Idempotency-Key` header) |
@@ -50,6 +51,16 @@ Requires Node.js 20+ and Docker.
     npm run dev
 
 Health check: `curl http://localhost:3010/health`
+
+## Admin page
+
+A React app in `web/` for managing the ledger: view accounts and balances, open accounts, add money, send transfers, and approve or reject held transfers.
+
+    cd web && npm install && cd ..
+    npm run dev:all
+
+Then open http://localhost:5180. `dev:all` starts the API and the admin page together; the admin page forwards `/api` requests to the API on port 3010.
+
 
 ## Tests
 
@@ -112,7 +123,7 @@ GitHub Actions runs lint, build, migrations, and the full suite against a fresh 
 
 ### Phase 6: Deployment and admin page
 - [ ] Deploy the API and PostgreSQL (Render, Railway, or Fly.io)
-- [ ] React admin page: accounts, transfers, and a flag review queue
+- [x] React admin page: accounts, transfers, and a flag review queue
 - [ ] Architecture diagram in this README
 - [ ] Live demo link
 

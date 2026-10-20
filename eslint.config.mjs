@@ -8,8 +8,10 @@ export default tseslint.config(
   prettier,
   {
     rules: {
+      // Allow unused parameters that start with _ (e.g. Express's _next).
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
-  { ignores: ["dist/", "node_modules/"] }
+  // web/ is the React app, which has its own ESLint config.
+  { ignores: ["dist/", "node_modules/", "web/"] }
 );

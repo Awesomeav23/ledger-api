@@ -81,3 +81,23 @@ accountsRouter.get("/accounts/:id", async (req, res) => {
   // Postgres returns BIGINT sums as strings, so convert to a number.
   res.json(toAccountJson(rows[0], Number(rows[0].balance_cents)));
 });
+
+// GET /accounts
+// Lists customer accounts with their balances, newest first.
+// The system cash account is left out, since users never act on it.
+accountsRouter.get("/accounts", async (_req, res) => {
+  const { rows } = await pool.query(
+    `SELECT a.id, a.owner_name, a.currency, a.created_at,
+       COALESCE((
+         SELECT SUM(CASE WHEN e.direction = 'credit' THEN e.amount_cents ELSE -e.amount_cents END)
+         FROM entries e
+         JOIN transactions t ON t.id = e.transaction_id
+         WHERE e.account_id = a.id AND t.status = 'completed'
+       ), 0) AS balance_cents
+     FROM accounts a
+     WHERE a.is_system = false
+     ORDER BY a.created_at DESC
+     LIMIT 200`,
+  );
+  res.json({ accounts: rows.map((r) => toAccountJson(r, Number(r.balance_cents))) });
+});

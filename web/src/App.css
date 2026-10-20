@@ -1,0 +1,210 @@
+/* Page frame */
+.app {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px double var(--rule-strong); /* bookkeeper's double rule */
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.masthead p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Ledger on the left, actions on the right; one column on small screens. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.25rem;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+}
+
+/* The accounts ledger */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ledger th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 3px double var(--rule-strong);
+}
+
+.ledger td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Amounts line up digit-for-digit, right-aligned like a ledger column. */
+.amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ledger td.amount {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.owner {
+  font-weight: 600;
+}
+
+.account-id {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Forms */
+.field {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+}
+
+.button {
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.button.quiet {
+  color: var(--ink);
+  background: transparent;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Result and error messages under each form */
+.notice {
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.notice.ok {
+  color: var(--credit);
+}
+
+.notice.error {
+  color: var(--debit);
+}
+
+.notice.hold {
+  color: var(--hold);
+}
+
+/* Transfers waiting for review */
+.hold-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hold-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: var(--hold-wash);
+  border-left: 4px solid var(--hold);
+  border-radius: 3px;
+}
+
+.hold-item p {
+  margin: 0;
+}
+
+.hold-reason {
+  font-size: 0.9375rem;
+  color: var(--hold);
+}
+
+.hold-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 36rem) {
+  .hold-item {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,54 @@
+/* Public Sans: the typeface the U.S. government designed for its services. */
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap");
+
+/* Palette borrowed from accounting ledger paper. */
+:root {
+  --paper: #edf2ea; /* pale green ledger paper */
+  --sheet: #f8faf5; /* panels */
+  --rule: #c5d3c2; /* ruled lines */
+  --rule-strong: #8fa98c; /* double rules under headings */
+  --ink: #1d2b3a; /* navy ink for text */
+  --muted: #56655f; /* secondary text */
+  --credit: #1e6b45; /* money in */
+  --debit: #a8322a; /* money out, errors */
+  --hold: #8a5a0c; /* transfers waiting for review */
+  --hold-wash: #f7ead0;
+
+  font-family: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Form controls use the page font instead of the browser's default. */
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* A clear outline for keyboard users. */
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

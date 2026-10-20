@@ -59,3 +59,18 @@ describe("GET /accounts/:id", () => {
     expect(res.body.error).toBe("account_not_found");
   });
 });
+
+describe("GET /accounts", () => {
+  it("lists customer accounts newest first, without the system account", async () => {
+    const first = await request(app).post("/accounts").send({ ownerName: "First" });
+    const second = await request(app).post("/accounts").send({ ownerName: "Second" });
+
+    const res = await request(app).get("/accounts");
+
+    expect(res.status).toBe(200);
+    expect(res.body.accounts.map((a: { id: string }) => a.id)).toEqual([
+      second.body.id,
+      first.body.id,
+    ]);
+  });
+});
