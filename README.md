@@ -1,5 +1,7 @@
 # Ledger API
 
+[![CI](https://github.com/Awesomeav23/ledger-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Awesomeav23/ledger-api/actions/workflows/ci.yml)
+
 A transaction ledger API with double-entry bookkeeping and fraud detection rules, built with TypeScript, Node.js/Express, and PostgreSQL.
 
 ## Features
@@ -49,6 +51,19 @@ Requires Node.js 20+ and Docker.
 
 Health check: `curl http://localhost:3010/health`
 
+## Tests
+
+One-time setup: create and migrate a separate test database.
+
+    docker exec ledger-db psql -U ledger -d ledger -c "CREATE DATABASE ledger_test;"
+    npm run db:migrate:test
+
+Run the suite (39 tests: fraud rules, accounts, deposits, transfers, concurrency, idempotency, flag review, ledger integrity):
+
+    npm test
+
+GitHub Actions runs lint, build, migrations, and the full suite against a fresh PostgreSQL database on every push.
+
 ## Roadmap
 
 ### Phase 0: Project setup
@@ -88,12 +103,12 @@ Health check: `curl http://localhost:3010/health`
 - [x] `GET /flags`, `POST /flags/:id/approve`, and `POST /flags/:id/reject`
 
 ### Phase 5: Automated tests and CI
-- [ ] Unit tests for fraud rules and balance math
-- [ ] Integration tests against a real PostgreSQL container
-- [ ] Tests for insufficient funds, repeated idempotency keys, and validation errors
-- [ ] Automated concurrency test (parallel transfers never push a balance below zero)
-- [ ] Automated ledger check (all entries sum to zero)
-- [ ] GitHub Actions workflow with a PostgreSQL service container
+- [x] Unit tests for fraud rules and balance math
+- [x] Integration tests against a real PostgreSQL container
+- [x] Tests for insufficient funds, repeated idempotency keys, and validation errors
+- [x] Automated concurrency test (parallel transfers never push a balance below zero)
+- [x] Automated ledger check (all entries sum to zero)
+- [x] GitHub Actions workflow with a PostgreSQL service container
 
 ### Phase 6: Deployment and admin page
 - [ ] Deploy the API and PostgreSQL (Render, Railway, or Fly.io)
@@ -167,3 +182,18 @@ Verified manually:
 - A $600 transfer from a minutes-old account was flagged, while the drain rule correctly stayed quiet
 - Approving the same flag twice was refused (409)
 - All completed entries still sum to zero
+
+### After Phase 5: Automated tests and CI
+
+What the project can do:
+- Run 39 automated tests with `npm test`, against a separate test database that never touches development data
+- Run lint, build, migrations, and the full test suite on GitHub Actions for every push
+
+Covered by the tests:
+- Every fraud rule, including just-below-the-limit cases (5th vs. 6th transfer, exactly 90% vs. over 90%)
+- Account creation, validation errors, and audit log entries
+- Deposits, transfers, insufficient funds, and invalid transfers
+- 5 simultaneous transfers from one account: exactly 3 succeed and the balance never goes negative
+- Retries, reused keys, and 5 simultaneous identical requests moving money only once
+- Holding, approving, and rejecting flagged transfers, including refusing an approval after the money was spent
+- All completed entries summing to zero
