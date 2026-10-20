@@ -98,6 +98,28 @@ Health check: `curl http://localhost:3010/health`
 
 ## Progress log
 
+### After Phase 0: Project setup
+
+What the API can do:
+- Run locally with PostgreSQL in Docker and the API with `npm run dev`
+- Report its status at `GET /health`: `ok` when the database is reachable, 503 when it isn't
+
+Verified manually:
+- The health check returned 503 with the database stopped, and `ok` after restarting it
+- Lint and the TypeScript build pass
+
+### After Phase 1: Schema and migrations
+
+What the database can do:
+- Store accounts, transactions, ledger entries, and an audit log
+- Apply schema changes with `npm run db:migrate`, which runs only new migration files
+- Enforce data rules itself, even if the API code has a bug
+
+Verified manually:
+- The database rejected a lowercase currency, a duplicate idempotency key, an unknown status, a negative amount, an invalid direction, and an entry for an account that doesn't exist
+- A valid entry was accepted
+- The migration runner skipped files that had already been applied
+
 ### After Phase 2: Core endpoints
 
 What the API can do:
