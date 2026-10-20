@@ -94,3 +94,20 @@ Health check: `curl http://localhost:3010/health`
 - [ ] React admin page: accounts, transfers, and a flag review queue
 - [ ] Architecture diagram in this README
 - [ ] Live demo link
+
+## Progress log
+
+### After Phase 2: Core endpoints
+
+What the API can do:
+- Create accounts and get each account's balance, calculated from ledger entries
+- Deposit money into an account through the system cash account
+- Transfer money between accounts, safely under concurrent requests
+- Show an account's full debit and credit history, newest first, with cursor pagination
+- Return clear errors: 400 for invalid input, 404 for missing accounts, 422 for insufficient funds
+
+Verified manually:
+- 10 simultaneous $10 transfers from a $70 account: 7 succeeded, 3 were rejected, and the balance ended at exactly $0
+- All ledger entries sum to zero after deposits and transfers
+- Pagination returns every entry exactly once across pages, even when entries share the same millisecond
+- Transfers to the same account, transfers involving the system account, decimal amounts, and broken cursors are all rejected
