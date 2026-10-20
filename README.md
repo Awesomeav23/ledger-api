@@ -9,6 +9,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 - Transfers protected by row locking, so concurrent requests can't overspend an account
 - Input validation with Zod and consistent JSON error responses
 - Audit log for every account, deposit, and transfer
+- Fraud rules that hold suspicious transfers for review instead of completing them
 - Database constraints that block invalid data even if the API has a bug
 
 ## Design decisions
@@ -19,6 +20,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 - **Row locking:** transfers lock both accounts with `SELECT ... FOR UPDATE`. In a test of 10 simultaneous $10 transfers from a $70 account, exactly 7 succeeded and 3 were rejected.
 - **Deadlock prevention:** accounts are always locked in ID order.
 - **Idempotency keys:** each transfer requires an `Idempotency-Key` header. A retry with the same key and body returns the original response instead of moving money again; the same key with a different body is rejected.
+- **Fraud rules:** each transfer is checked against three rules (large transfer from a new account, more than 5 transfers in a minute, moving over 90% of the balance). A flagged transfer is saved as `pending_review` and only counts toward balances once approved.
 - **One database transaction per operation:** each request is fully saved or fully rolled back.
 
 ## API
@@ -31,6 +33,9 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 | POST | `/deposits` | Deposit money into an account |
 | POST | `/transfers` | Transfer money between accounts (requires `Idempotency-Key` header) |
 | GET | `/accounts/:id/entries` | Paginated entry history for an account |
+| GET | `/flags` | List fraud flags (open by default; `?status=approved` or `rejected`) |
+| POST | `/flags/:id/approve` | Approve a held transfer, after re-checking the balance |
+| POST | `/flags/:id/reject` | Reject a held transfer so its money never moves |
 
 ## Run locally
 
@@ -75,12 +80,12 @@ Health check: `curl http://localhost:3010/health`
 - [x] Test that a repeated request creates only one transfer
 
 ### Phase 4: Fraud rules
-- [ ] Rule engine where each rule returns flag or pass
-- [ ] Rule: large transfer from an account less than 24 hours old
-- [ ] Rule: more than five transfers from one account within one minute
-- [ ] Rule: transfer that moves over 90% of the balance
-- [ ] `fraud_flags` table, with flagged transfers held as `pending_review`
-- [ ] `GET /flags`, `POST /flags/:id/approve`, and `POST /flags/:id/reject`
+- [x] Rule engine where each rule returns flag or pass
+- [x] Rule: large transfer from an account less than 24 hours old
+- [x] Rule: more than five transfers from one account within one minute
+- [x] Rule: transfer that moves over 90% of the balance
+- [x] `fraud_flags` table, with flagged transfers held as `pending_review`
+- [x] `GET /flags`, `POST /flags/:id/approve`, and `POST /flags/:id/reject`
 
 ### Phase 5: Automated tests and CI
 - [ ] Unit tests for fraud rules and balance math
@@ -146,3 +151,19 @@ What the API can do:
 Verified manually:
 - A retried transfer returned the same transaction ID, and balances changed only once
 - 5 identical requests sent at the same time all returned 201, but money moved only once
+
+### After Phase 4: Fraud rules
+
+What the API can do:
+- Check every transfer against three fraud rules before completing it
+- Hold flagged transfers as `pending_review` (202 Accepted) without changing any balance
+- List open, approved, or rejected flags with each transfer's accounts and amount
+- Approve a held transfer after re-checking the sender's balance, or reject it so its money never moves
+
+Verified manually:
+- A $65 transfer from a $70 balance was flagged, then approved, and both balances updated
+- A $90 transfer from a $95 balance was flagged, then rejected, and neither balance changed
+- The 6th transfer within one minute was flagged for high velocity
+- A $600 transfer from a minutes-old account was flagged, while the drain rule correctly stayed quiet
+- Approving the same flag twice was refused (409)
+- All completed entries still sum to zero

@@ -4,6 +4,7 @@ import { accountsRouter } from "./routes/accounts";
 import { depositsRouter } from "./routes/deposits";
 import { transfersRouter } from "./routes/transfers";
 import { entriesRouter } from "./routes/entries";
+import { flagsRouter } from "./routes/flags";
 import { errorHandler } from "./errors";
 
 // The Express app. It's exported separately from server.ts so tests can
@@ -19,6 +20,7 @@ app.use(accountsRouter); // POST /accounts, GET /accounts/:id
 app.use(depositsRouter); // POST /deposits
 app.use(transfersRouter); // POST /transfers
 app.use(entriesRouter); // GET /accounts/:id/entries
+app.use(flagsRouter); // GET /flags, POST /flags/:id/approve, POST /flags/:id/reject
 
 // Error handler. It must be registered last, so it catches errors
 // thrown by any route above it.
