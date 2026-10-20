@@ -5,15 +5,20 @@ import { HttpError } from "../errors";
 
 export const accountsRouter = Router();
 
+// Request body for creating an account. The name is trimmed and must be
+// 1–100 characters. The currency must be 3 capital letters, default USD.
 const createAccountSchema = z.object({
   ownerName: z.string().trim().min(1).max(100),
   currency: z.string().regex(/^[A-Z]{3}$/).default("USD"),
 });
 
+// The :id in the URL must be a valid UUID.
 const idParamSchema = z.object({ id: z.uuid() });
 
+// Shape of an account row as it comes back from the database.
 type AccountRow = { id: string; owner_name: string; currency: string; created_at: Date };
 
+// Converts a database row (snake_case) into the API's JSON shape (camelCase).
 function toAccountJson(row: AccountRow, balanceCents: number) {
   return {
     id: row.id,
@@ -24,10 +29,14 @@ function toAccountJson(row: AccountRow, balanceCents: number) {
   };
 }
 
+// POST /accounts
+// Creates an account and records it in the audit log.
 accountsRouter.post("/accounts", async (req, res) => {
   const body = createAccountSchema.parse(req.body);
   const client = await pool.connect();
   try {
+    // One transaction: the account and its audit row are saved together,
+    // or neither is.
     await client.query("BEGIN");
     const { rows } = await client.query(
       `INSERT INTO accounts (owner_name, currency) VALUES ($1, $2)
@@ -41,6 +50,7 @@ accountsRouter.post("/accounts", async (req, res) => {
       [account.id, JSON.stringify({ ownerName: body.ownerName, currency: body.currency })],
     );
     await client.query("COMMIT");
+    // A new account has no entries, so its balance is 0.
     res.status(201).json(toAccountJson(account, 0));
   } catch (err) {
     await client.query("ROLLBACK");
@@ -50,6 +60,9 @@ accountsRouter.post("/accounts", async (req, res) => {
   }
 });
 
+// GET /accounts/:id
+// Returns an account with its balance, calculated from its entries
+// (credits minus debits, completed transactions only).
 accountsRouter.get("/accounts/:id", async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
   const { rows } = await pool.query(
@@ -65,5 +78,6 @@ accountsRouter.get("/accounts/:id", async (req, res) => {
     [id],
   );
   if (rows.length === 0) throw new HttpError(404, "account_not_found");
+  // Postgres returns BIGINT sums as strings, so convert to a number.
   res.json(toAccountJson(rows[0], Number(rows[0].balance_cents)));
 });
