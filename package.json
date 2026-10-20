@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:migrate:test": "DATABASE_URL=postgres://ledger:ledger@localhost:5440/ledger_test tsx src/db/migrate.ts",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -36,11 +38,14 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.10",
+    "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^3.2.7"
   }
 }

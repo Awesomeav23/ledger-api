@@ -1,0 +1,55 @@
+# Runs lint, build, and the full test suite on every push to main
+# and on every pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # A fresh PostgreSQL 16 database just for this run, deleted afterward.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ledger
+          POSTGRES_PASSWORD: ledger
+          POSTGRES_DB: ledger_test
+        ports:
+          - 5432:5432
+        # Wait until Postgres is ready before running any steps.
+        options: >-
+          --health-cmd "pg_isready -U ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Both the migration runner and the tests read the database URL from here.
+    env:
+      DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test
+      TEST_DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test
+
+    steps:
+      # Download the repository's code.
+      - uses: actions/checkout@v4
+
+      # Install Node 22 (LTS), caching npm downloads between runs.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Install the exact package versions from package-lock.json.
+      - run: npm ci
+
+      - run: npm run lint
+      - run: npm run build
+
+      # Create the tables in the fresh database.
+      - run: npm run db:migrate
+
+      - run: npm test
