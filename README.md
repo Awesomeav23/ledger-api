@@ -29,6 +29,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 | GET | `/accounts/:id` | Get an account and its balance |
 | POST | `/deposits` | Deposit money into an account |
 | POST | `/transfers` | Transfer money between accounts |
+| GET | `/accounts/:id/entries` | Paginated entry history for an account |
 
 ## Run locally
 
@@ -65,7 +66,7 @@ Health check: `curl http://localhost:3010/health`
 - [x] System cash account and `POST /deposits`
 - [x] `POST /transfers` with row locking, deadlock-safe lock order, and insufficient funds check
 - [x] Manual concurrency test: 10 simultaneous transfers, exactly 7 succeeded and 3 rejected
-- [ ] `GET /accounts/:id/entries` with pagination
+- [x] `GET /accounts/:id/entries` with cursor pagination
 
 ### Phase 3: Idempotency
 - [ ] Require an `Idempotency-Key` header on `POST /transfers`
