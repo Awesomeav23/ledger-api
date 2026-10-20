@@ -18,6 +18,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 - **Calculated balances:** balance = credits minus debits for completed transactions, so it can't drift out of sync.
 - **Row locking:** transfers lock both accounts with `SELECT ... FOR UPDATE`. In a test of 10 simultaneous $10 transfers from a $70 account, exactly 7 succeeded and 3 were rejected.
 - **Deadlock prevention:** accounts are always locked in ID order.
+- **Idempotency keys:** each transfer requires an `Idempotency-Key` header. A retry with the same key and body returns the original response instead of moving money again; the same key with a different body is rejected.
 - **One database transaction per operation:** each request is fully saved or fully rolled back.
 
 ## API
@@ -28,7 +29,7 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 | POST | `/accounts` | Create an account |
 | GET | `/accounts/:id` | Get an account and its balance |
 | POST | `/deposits` | Deposit money into an account |
-| POST | `/transfers` | Transfer money between accounts |
+| POST | `/transfers` | Transfer money between accounts (requires `Idempotency-Key` header) |
 | GET | `/accounts/:id/entries` | Paginated entry history for an account |
 
 ## Run locally
@@ -69,9 +70,9 @@ Health check: `curl http://localhost:3010/health`
 - [x] `GET /accounts/:id/entries` with cursor pagination
 
 ### Phase 3: Idempotency
-- [ ] Require an `Idempotency-Key` header on `POST /transfers`
-- [ ] Return the original result when the same key is sent again, instead of creating a second transfer
-- [ ] Test that a repeated request creates only one transfer
+- [x] Require an `Idempotency-Key` header on `POST /transfers`
+- [x] Return the original result when the same key is sent again, instead of creating a second transfer
+- [x] Test that a repeated request creates only one transfer
 
 ### Phase 4: Fraud rules
 - [ ] Rule engine where each rule returns flag or pass
@@ -111,3 +112,15 @@ Verified manually:
 - All ledger entries sum to zero after deposits and transfers
 - Pagination returns every entry exactly once across pages, even when entries share the same millisecond
 - Transfers to the same account, transfers involving the system account, decimal amounts, and broken cursors are all rejected
+
+### After Phase 3: Idempotency
+
+What the API can do:
+- Require an `Idempotency-Key` header on every transfer
+- Return the original response for a retried transfer, marked with an `Idempotent-Replayed: true` header, without moving money again
+- Reject a reused key sent with a different body (422 `idempotency_key_reused`)
+- Reject transfers that have no key (400 `idempotency_key_required`)
+
+Verified manually:
+- A retried transfer returned the same transaction ID, and balances changed only once
+- 5 identical requests sent at the same time all returned 201, but money moved only once
