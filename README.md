@@ -25,6 +25,25 @@ A transaction ledger API with double-entry bookkeeping and fraud detection rules
 - **Fraud rules:** each transfer is checked against three rules (large transfer from a new account, more than 5 transfers in a minute, moving over 90% of the balance). A flagged transfer is saved as `pending_review` and only counts toward balances once approved.
 - **One database transaction per operation:** each request is fully saved or fully rolled back.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  Admin["Admin page<br/>React + Vite, in web/"]
+  API["Ledger API<br/>Express + TypeScript"]
+  Rules["Fraud rules"]
+  DB[("PostgreSQL<br/>accounts, transactions, entries,<br/>audit_log, fraud_flags")]
+  CI["GitHub Actions"]
+  TestDB[("Test database")]
+
+  Admin -->|"HTTP + JSON"| API
+  API -->|"checks each transfer"| Rules
+  API -->|"one transaction per request,<br/>row locks on accounts"| DB
+  CI -->|"lint, build, migrate,<br/>40 tests"| TestDB
+```
+
+Each request runs inside one database transaction. Transfers lock both accounts before checking the balance, run the fraud rules, and either complete or are held for review.
+
 ## API
 
 | Method | Endpoint | Description |
@@ -124,7 +143,7 @@ GitHub Actions runs lint, build, migrations, and the full suite against a fresh 
 ### Phase 6: Deployment and admin page
 - [ ] Deploy the API and PostgreSQL (Render, Railway, or Fly.io)
 - [x] React admin page: accounts, transfers, and a flag review queue
-- [ ] Architecture diagram in this README
+- [x] Architecture diagram in this README
 - [ ] Live demo link
 
 ## Progress log
@@ -208,3 +227,20 @@ Covered by the tests:
 - Retries, reused keys, and 5 simultaneous identical requests moving money only once
 - Holding, approving, and rejecting flagged transfers, including refusing an approval after the money was spent
 - All completed entries summing to zero
+
+### After Phase 6 (local): Admin page
+
+What the project can do:
+- Run the API and a React admin page together with `npm run dev:all`
+- List every account with its balance (`GET /accounts`)
+- Open accounts, add money, and send transfers from the admin page
+- Show whether each transfer completed, was held for review (with the rule's reason), or was refused, in plain language
+- Approve or reject held transfers from a review queue, grouped so a transfer that broke two rules needs only one decision
+
+Verified manually:
+- A completed transfer updated both balances in the table
+- A transfer over 90% of the balance was held, and no balances changed
+- A transfer larger than the balance was refused with a readable message
+- Approving a held transfer moved the money; rejecting one left both balances unchanged
+
+Not yet done: deploying the API, database, and admin page online.
